@@ -1,6 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum RegexOperation {
     PositiveCharGroup { chars: Vec<char> },
+    NegativeCharGroup { chars: Vec<char> },
     Digit,
     Alphanumeric,
     Literal { exact: String },
@@ -29,6 +30,7 @@ impl RegexEngine {
                 RegexOperation::Digit => self.digit(),
                 RegexOperation::Alphanumeric => self.alphanumeric(),
                 RegexOperation::PositiveCharGroup { chars } => self.positive_character_group(chars),
+                RegexOperation::NegativeCharGroup { chars } => self.negative_character_group(chars),
             }
         }
 
@@ -73,6 +75,21 @@ impl RegexEngine {
         let result = matches.into_iter().all(|c| c);
         self.matches.push(result);
     }
+
+    fn negative_character_group(&mut self, chars: Vec<char>) {
+        let mut matches = vec![];
+        for char in self.input.chars() {
+            if !chars.contains(&char) {
+                matches.push(true);
+            }
+        }
+
+        if matches.is_empty() {
+            matches.push(false);
+        }
+        let result = matches.into_iter().all(|c| c);
+        self.matches.push(result);
+    }
 }
 
 fn parse_pattern(pattern: &str) -> Vec<RegexOperation> {
@@ -84,14 +101,25 @@ fn parse_pattern(pattern: &str) -> Vec<RegexOperation> {
         match next {
             '[' => {
                 let mut pat = Vec::new();
+                let mut pos = true;
                 while let Some(ch) = iter.next() {
                     if ch == ']' {
                         break;
                     }
+
+                    if ch == '^' {
+                        pos = false;
+                        continue;
+                    }
+
                     pat.push(ch);
                 }
 
-                ops.push(RegexOperation::PositiveCharGroup { chars: pat });
+                if pos {
+                    ops.push(RegexOperation::PositiveCharGroup { chars: pat });
+                } else {
+                    ops.push(RegexOperation::NegativeCharGroup { chars: pat });
+                }
             }
             '\\' => {
                 let param = iter.next().unwrap();
