@@ -18,6 +18,15 @@ fn matches_pattern(input: &str, pattern: String) -> bool {
 
             false
         }
+        "\\w" => {
+            for char in input.chars() {
+                if char.is_alphanumeric() {
+                    return true;
+                }
+            }
+
+            false
+        }
         _ => return input.contains(&pattern),
     }
 }
