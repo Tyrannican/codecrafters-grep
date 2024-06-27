@@ -8,7 +8,18 @@ struct Cli {
 }
 
 fn matches_pattern(input: &str, pattern: String) -> bool {
-    input.contains(&pattern)
+    match pattern.as_str() {
+        "\\d" => {
+            for char in input.chars() {
+                if char.is_numeric() {
+                    return true;
+                }
+            }
+
+            false
+        }
+        _ => return input.contains(&pattern),
+    }
 }
 
 fn main() {
